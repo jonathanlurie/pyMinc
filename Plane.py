@@ -1,18 +1,27 @@
+import VectorTools
+import math
 
+# simple verification from casio website: http://bit.ly/29LMfQ9
 
 class Plane:
 
     # the plane equation is:
     # ax + by + cz + d = 0
-
+    # here are those coeficents:
     _a = None
     _b = None
     _c = None
     _d = None
-    _normalVector = None
+
+    _n = None   # the normal vector to the plane
+    _u = None   # one of the vector that belong to the plane
+    _v = None   # another vector that belong to the plane, orthogonal to _u
+
+    _vecTools = None    # some (simple) tool to perform vector calculus
+
 
     def __init__(self):
-        None
+        self._vecTools = VectorTools.VectorTools()
 
 
     # initialize the equation of the plane from 3 points
@@ -22,16 +31,14 @@ class Plane:
         vPQ = (Q[0] - P[0], Q[1] - P[1], Q[2] - P[2])
         vPR = (R[0] - P[0], R[1] - P[1], R[2] - P[2])
 
-        self._normalVector = ( \
-            vPQ[1] * vPR[2] - vPQ[2] * vPR[1], \
-            (vPQ[0] * vPR[2] - vPQ[2] * vPR[0] ) * (-1), \
-            vPQ[0] * vPR[1] - vPQ[1] * vPR[0]
-        )
+        self._n = self._vecTools.crossProduct(vPQ, vPR, False)
 
-        self._a = self._normalVector[0]
-        self._b = self._normalVector[1]
-        self._c = self._normalVector[2]
+        self._a = self._n[0]
+        self._b = self._n[1]
+        self._c = self._n[2]
         self._d = (-1) * (self._a * P[0] + self._b * P[1] + self._c * P[2] )
+
+        self._defineUandV(P, Q)
 
 
     # return the abcd factors of the plane equation as a tuple
@@ -42,7 +49,7 @@ class Plane:
 
     # return tuple with normal the vector
     def getNormalVector(self):
-        return self._normalVector
+        return self._n
 
 
     # u and v are two vectors frome this plane.
@@ -53,24 +60,19 @@ class Plane:
     # args: P and Q are two points from the plane. vPQ, when normalized
     # will be used as u
     def _defineUandV(self, P, Q):
-        futureU = (Q[0] - P[0], Q[1] - P[1], Q[2] - P[2])
+        self._u = self._vecTools.normalize( ( \
+            Q[0] - P[0], \
+            Q[1] - P[1], \
+            Q[2] - P[2]\
+            ) )
 
-        # the future vector v
-        futureV = ( \
-            futureU[1] * self._normalVector[2] - futureU[2] * self._normalVector[1], \
-            (futureU[0] * self._normalVector[2] - futureU[2] * self._normalVector[0] ) * (-1), \
-            futureU[0] * self._normalVector[1] - futureU[1] * self._normalVector[0]
-        )
+        self._v =  self._vecTools.crossProduct(self._u, self._n)
 
-        futureU_norm = math.sqrt(futureU[0]*futureU[0] + futureU[1]*futureU[1] + futureU[2]*futureU[2])
-        futureU = (futureU[0]/futureU_norm, futureU[1]/futureU_norm, futureU[2]/futureU_norm)
-
-        futureV_norm = math.sqrt(futureV[0]*futureV[0] + futureV[1]*futureV[1] + futureV[2]*futureV[2])
-        futureV = (futureV[0]/futureV_norm, futureV[1]/futureV_norm, futureV[2]/futureV_norm)
 
 
 if __name__ == "__main__":
     p = Plane()
     #p.makeFromThreePoints( (1, -2, 0), (3, 1, 4), (0, -1, 2))
-
-    p.makeFromThreePoints( (1, -2, 0), (3, 10, 4), (0, -1, 2))
+    #p.makeFromThreePoints( (1, -2, 0), (3, 10, 4), (0, -1, 2))
+    p.makeFromThreePoints( (0, 0, 0), (1, 0, 0), (0, 1, 1))
+    print p.getPlaneEquation()

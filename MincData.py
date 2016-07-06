@@ -4,7 +4,7 @@ import codecs, json
 from PIL import Image
 import math
 
-class MincReader:
+class MincData:
     _mincHdf = None
     _imageDataset = None
     _xLength = 0
@@ -103,6 +103,7 @@ class MincReader:
             print("ERROR: the slice index must be [0; " + str(self._zLength-1) + "]")
 
 
+    # USELESS
     # export the 3D block as a json file
     def exportToJson(self, filename):
         print("Info")
@@ -151,6 +152,91 @@ class MincReader:
                return self._getValueTrilinear(x, y, z)
         else:
             print("ERROR: one of the index is out of range")
+
+
+    # each edge has a index, TODO: write about it.
+    # return a list of edge data like that:
+    # edgeData[n][vector, point]
+    # where n is [0, 11] (a cube has 12 edges),
+    # vector is a tuple (x, y, z),
+    # and point is a point from the edge, also a tuple (x, y, z)
+    def getEdgesEquations(self):
+        edgeData = []
+
+        # 0
+        # vector:
+        edge0Vect = (self._xLength, 0, 0)
+        edge0Point = (0, 0, 0)
+
+        # 1
+        # vector:
+        edge1Vect = (0, self._yLength, 0)
+        edge1Point = (0, 0, 0)
+
+        # 2
+        # vector:
+        edge2Vect = (0, 0, self._zLength)
+        edge2Point = (0, 0, 0)
+
+        # 3
+        # vector:
+        edge3Vect = (0, 0, self._zLength)
+        edge3Point = (self._xLength, 0, 0)
+
+        # 4
+        # vector:
+        edge4Vect = (self._xLength, 0, 0)
+        edge4Point = (0, 0, self._zLength)
+
+        # 5
+        # vector:
+        edge5Vect = (self._xLength, 0, 0)
+        edge5Point = (0, self._yLength, 0)
+
+        # 6
+        # vector:
+        edge6Vect = (0, 0, self._zLength)
+        edge6Point = (0, self._yLength, 0)
+
+        # 7
+        # vector:
+        edge7Vect = (0, 0, self._zLength)
+        edge7Point = (self._xLength, self._yLength, 0)
+
+        # 8
+        # vector:
+        edge8Vect = (self._xLength, 0, 0)
+        edge8Point = (0, self._yLength, self._zLength)
+
+        # 9
+        # vector:
+        edge9Vect = (0, self._yLength, 0)
+        edge9Point = (0, 0, self._zLength)
+
+        # 10
+        # vector:
+        edge10Vect = (0, self._yLength, 0)
+        edge10Point = (self._xLength, 0, 0)
+
+        # 11
+        # vector:
+        edge11Vect = (0, self._yLength, 0)
+        edge11Point = (self._xLength, 0, self._zLength)
+
+        edgeData.append( (edge0Vect, edge0Point) )
+        edgeData.append( (edge1Vect, edge1Point) )
+        edgeData.append( (edge2Vect, edge2Point) )
+        edgeData.append( (edge3Vect, edge3Point) )
+        edgeData.append( (edge4Vect, edge4Point) )
+        edgeData.append( (edge5Vect, edge5Point) )
+        edgeData.append( (edge6Vect, edge6Point) )
+        edgeData.append( (edge7Vect, edge7Point) )
+        edgeData.append( (edge8Vect, edge8Point) )
+        edgeData.append( (edge9Vect, edge9Point) )
+        edgeData.append( (edge10Vect, edge10Point) )
+        edgeData.append( (edge11Vect, edge11Point) )
+
+        return edgeData
 
     # private mathod to save a numpy array as an image.
     # BEWARE: no data casting to [0, 255]
@@ -207,3 +293,29 @@ class MincReader:
                 V111 * xNorm * yNorm * zNorm
 
         return interpVal
+
+
+
+    # return True if the given point is within the data cube.
+    # when allowEdges is true, the upper boundaries are pushed
+    # by +1 in x, y and z
+    def isWithin(self, point, allowEdges):
+
+        if(allowEdges):
+            if(point[0] >= 0 and \
+               point[1] >= 0 and \
+               point[2] >= 0 and \
+               point[0] <= self._xLength and \
+               point[1] <= self._yLength and \
+               point[2] <= self._zLength ):
+               return True
+        else:
+            if(point[0] >= 0 and \
+               point[1] >= 0 and \
+               point[2] >= 0 and \
+               point[0] < self._xLength and \
+               point[1] < self._yLength and \
+               point[2] < self._zLength ):
+               return True
+
+        return False
