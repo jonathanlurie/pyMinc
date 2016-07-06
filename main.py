@@ -21,9 +21,12 @@ p = Plane.Plane()
 #p.makeFromThreePoints( (0, 0, 0), (386, 0, 0), (0, 303, 348)) #OK
 #p.makeFromThreePoints( (0, 0, 0), (386, 0, 0), (100, 303, 348)) #OK
 #p.makeFromThreePoints( (0, 0, 0), (386, 0, 0), (0, 303, 100)) #OK
+#p.makeFromThreePoints( (3, 280, 5), (9, 295, 52), (32, 295, 2)) #OK
 
-p.makeFromThreePoints( (3, 280, 5), (9, 295, 52), (32, 295, 2))
+p.makeFromThreePoints( (0, 303, 300), (350, 303, 0), (350, 0, 0)) #OK
+
 
 
 os = ObliqueSampler.ObliqueSampler(md, p)
 os.computeCubePlaneHitPoints()
+os.startSampling("out.jpg")

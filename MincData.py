@@ -103,6 +103,11 @@ class MincData:
             print("ERROR: the slice index must be [0; " + str(self._zLength-1) + "]")
 
 
+    # return the data type used in the minc dataset (numpy compliant)
+    def getDataType(self):
+        return self._dataType
+
+
     # USELESS
     # export the 3D block as a json file
     def exportToJson(self, filename):
@@ -135,23 +140,31 @@ class MincData:
     # if x, y or z is not integer, we are performing
     # a trilinear interpolation
     def getValue(self, x, y, z):
-        if(x >= 0 and x < self._xLength and
-           y >= 0 and y < self._yLength and
-           z >= 0 and z < self._zLength):
+        # here we are keeping a 1 pixel margin to be sure we can interpolate
+        if( (x >= 0 and x < self._xLength) and
+            (y >= 0 and y < self._yLength) and
+            (z >= 0 and z < self._zLength)):
 
            if(x.is_integer() and x.is_integer() and z.is_integer()):
-               print x
-               print y
-               print z
+              # print x
+              # print y
+              # print z
 
                val = self._imageDataset[int(x)][int(y), int(z)]
-               print val
-               print "-------------------------"
+              # print val
+              # print "-------------------------"
                return val
            else:
-               return self._getValueTrilinear(x, y, z)
+               return self.getValue( math.floor(x), math.floor(y), math.floor(z))
+               #return self._getValueTrilinear(x, y, z)
         else:
             print("ERROR: one of the index is out of range")
+
+
+    # exactelly the same as getValue, except it takes
+    # a tuple (x, y, z) instead of 3 args
+    def getValueTuple(self, coord):
+        return self.getValue(coord[0], coord[1], coord[2])
 
 
     # each edge has a index, TODO: write about it.
@@ -248,6 +261,13 @@ class MincData:
     # simple trilinear interpolation taken from
     # http://paulbourke.net/miscellaneous/interpolation
     def _getValueTrilinear(self, x, y, z):
+
+        # we dont bother with the sides
+        if( x < 2 or x > self._xLength-3 or
+            y < 2 or y > self._yLength-3 or
+            z < 2 or z > self._zLength-3):
+            return 0
+
         '''
         Here x, y and z are in a normalized space.
 
@@ -283,23 +303,48 @@ class MincData:
         V110 = self.getValue(xTop, yTop, zBottom)
         V111 = self.getValue(xTop, yTop, zTop)
 
-        interpVal = V000 * (1 - xNorm) * (1 - yNorm) * (1 - zNorm) + \
-                V100 * xNorm * (1 - yNorm) * (1 - zNorm) + \
-                V010 * (1 - xNorm) * yNorm * (1 - zNorm) + \
-                V001 * (1 - xNorm) * (1 - yNorm) * zNorm + \
-                V101 * xNorm * (1 - yNorm) * zNorm + \
-                V011 * (1 - xNorm) * yNorm * zNorm + \
-                V110 * xNorm * yNorm * (1 - zNorm) + \
-                V111 * xNorm * yNorm * zNorm
+        try:
 
-        return interpVal
+            interpVal = V000 * (1 - xNorm) * (1 - yNorm) * (1 - zNorm) + \
+                    V100 * xNorm * (1 - yNorm) * (1 - zNorm) + \
+                    V010 * (1 - xNorm) * yNorm * (1 - zNorm) + \
+                    V001 * (1 - xNorm) * (1 - yNorm) * zNorm + \
+                    V101 * xNorm * (1 - yNorm) * zNorm + \
+                    V011 * (1 - xNorm) * yNorm * zNorm + \
+                    V110 * xNorm * yNorm * (1 - zNorm) + \
+                    V111 * xNorm * yNorm * zNorm
+
+            return interpVal
+
+        except TypeError as e:
+            print e
+
+            print "V110"
+            print V110
+
+            print "xNorm"
+            print xNorm
+
+            print "yNorm"
+            print yNorm
+
+            print "zNorm"
+            print zNorm
+
+            print str(x) + " " + str(y) + " " + str(z)
+
+            print "-------------------------------"
+
+            return None
+
+
 
 
 
     # return True if the given point is within the data cube.
     # when allowEdges is true, the upper boundaries are pushed
     # by +1 in x, y and z
-    def isWithin(self, point, allowEdges):
+    def isWithin(self, point, allowEdges=False):
 
         if(allowEdges):
             if(point[0] >= 0 and \

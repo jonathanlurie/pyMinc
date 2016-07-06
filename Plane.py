@@ -69,6 +69,17 @@ class Plane:
         self._v =  self._vecTools.crossProduct(self._u, self._n)
 
 
+    # return the unit vector u as a tuple (x, y, z)
+    def getUvector(self):
+        return self._u
+
+
+    # return the unit vector v as a tuple (x, y, z)
+    def getVvector(self):
+        return self._v
+
+
+
 
 if __name__ == "__main__":
     p = Plane()

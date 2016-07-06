@@ -1,8 +1,13 @@
 # some doc about afine/plane intersection: http://bit.ly/29kRQhv
 
+import math
+
 import VectorTools
 import MincData
 import Plane
+
+import numpy as np
+from PIL import Image
 
 class ObliqueSampler:
     _3Ddata = None  # an instance of MincData
@@ -116,13 +121,13 @@ class ObliqueSampler:
 
     # return the center of the polygon
     # as a tuple (x, y, z)
-    def _defineStartingSeed(self):
+    def _getStartingSeed(self):
         if(self._planePolygon):
 
             xSum = 0
             ySum = 0
             zSum = 0
-            numOfVertex = float(self._planePolygon.length)
+            numOfVertex = float( len(self._planePolygon) )
 
             for vertex in self._planePolygon:
                 xSum = xSum + vertex[0]
@@ -138,3 +143,145 @@ class ObliqueSampler:
         else:
             print("ERROR: the polygon is not defined yet")
             return None
+
+
+    # return the diagonal (length) of the polygon bounding box
+    def _getLargestSide(self):
+
+        if(self._planePolygon):
+
+            xMin = self._planePolygon[0][0]
+            yMin = self._planePolygon[0][1]
+            zMin = self._planePolygon[0][2]
+
+            xMax = self._planePolygon[0][0]
+            yMax = self._planePolygon[0][1]
+            zMax = self._planePolygon[0][2]
+
+            for vertex in self._planePolygon:
+                xMin = min(xMin, vertex[0])
+                xMax = max(xMax, vertex[0])
+
+                yMin = min(yMin, vertex[1])
+                yMax = max(yMax, vertex[1])
+
+                zMin = min(zMin, vertex[2])
+                zMax = max(zMax, vertex[2])
+
+            boxSide = math.sqrt((xMax-xMin)*(xMax-xMin) + (yMax-yMin)*(yMax-yMin) + (zMax-zMin)*(zMax-zMin))
+
+
+            return boxSide
+
+        else:
+            print("ERROR: the polygon is not defined yet")
+            return None
+
+
+    # we always start to fill the oblique image from its 2D center (in arg)
+    # the center of the 2D oblique image matches the 3D starting seed
+    # (center of the inner polygon, made by the intersection of the
+    # plane with the cube)
+    #
+    def obliqueImageCoordToCubeCoord(self, centerImage, startingSeed, dx, dy):
+        u = self._plane.getUvector() # u goes to x direction (arbitrary)
+        v = self._plane.getVvector() # v goes to y direction (arbitrary)
+
+        target3Dpoint = (startingSeed[0] + dx * u[0] + dy * v[0], \
+            startingSeed[1]  + dx * u[1] + dy * v[1], \
+            startingSeed[2] + dx * u[2] + dy * v[2])
+
+        return target3Dpoint
+
+
+    # returns True if the 3D coord matching to this oblique image point
+    # is within the cube.
+    # Returns False if outside the cube.
+    def isImageCoordInCube(self, centerImage, startingSeed, dx, dy):
+        cubeCoord = self.obliqueImageCoordToCubeCoord(centerImage, startingSeed, dx, dy)
+        return self._3Ddata.isWithin(cubeCoord)
+
+
+
+
+    # start the sampling/filling process
+    def startSampling(self, filepath):
+        dataType = self._3Ddata.getDataType()
+        largestSide = self._getLargestSide()
+        startingSeed = self._getStartingSeed()
+
+        obliqueImageCenter = ( int(largestSide / 2), int(largestSide / 2))
+
+        # will contain the (interpolated) data from the cube
+        obliqueImage = np.zeros((int(largestSide), int(largestSide)), dtype=dataType )
+
+        # mask of boolean to track where the filling algorithm has already been
+        obliqueImageMask = np.zeros((int(largestSide), int(largestSide)), dtype=dataType  )
+
+        # stack used for the fillin algorithm
+        pixelStack = []
+        pixelStack.append(obliqueImageCenter)
+
+        counter = 0
+
+        while(len(pixelStack) > 0):
+            currentPixel = pixelStack.pop()
+            x = currentPixel[0]
+            y = currentPixel[1]
+
+            # if the image was not filled here...
+            if(obliqueImageMask[y, x] == 0):
+                # marking the mask (been here!)
+                obliqueImageMask[y, x] = 255
+
+                cubeCoord = self.obliqueImageCoordToCubeCoord(obliqueImageCenter, startingSeed, x - obliqueImageCenter[0], y - obliqueImageCenter[1])
+
+                # get the interpolated color of the currentPixel from 3D cube
+                color = self._3Ddata.getValueTuple(cubeCoord)
+
+                # painting the image
+                if(color):
+                    obliqueImage[y, x] = int(color)
+                else:
+                    obliqueImage[y, x] = 0
+
+
+                # going north
+                yNorth = y + 1
+                xNorth = x
+                if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xNorth - obliqueImageCenter[0], yNorth - obliqueImageCenter[1])):
+                    pixelStack.append((xNorth, yNorth))
+
+                # going south
+                ySouth = y - 1
+                xSouth = x
+                if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xSouth - obliqueImageCenter[0], ySouth - obliqueImageCenter[1])):
+                    pixelStack.append((xSouth, ySouth))
+
+                # going east
+                yEast = y
+                xEast = x + 1
+                if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xEast - obliqueImageCenter[0], yEast - obliqueImageCenter[1])):
+                    pixelStack.append((xEast, yEast))
+
+                # going west
+                yWest = y
+                xWest = x - 1
+                if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xWest - obliqueImageCenter[0], yWest - obliqueImageCenter[1])):
+                    pixelStack.append((xWest, yWest))
+
+            #if(counter%1000 == 0):
+
+                #print counter
+                #im = Image.fromarray(obliqueImageMask)
+                #im.save("mask/mask_" + str(counter) + ".jpg", quality=80)
+
+            counter = counter + 1
+
+
+        im = Image.fromarray(obliqueImage)
+        im.save(filepath, quality=100)
+
+
+
+    # TODO : add a sampling step for the oblique image
