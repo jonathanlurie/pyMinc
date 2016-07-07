@@ -86,11 +86,10 @@ class MincData:
             print(e)
 
 
-
     # export a slice after turning the plane over Y axis
     # if native slice are coronal, YRotated will be sagital.
     # width = self._xLength, height = self._yLength
-    def exportYRotatedSlice2(self, sliceIndex, outFilepath):
+    def exportYRotatedSlice(self, sliceIndex, outFilepath):
         try:
             self._saveImage(self._imageDatasetNd[:, :, sliceIndex], outFilepath)
         except IndexError as e:
@@ -100,7 +99,7 @@ class MincData:
     # export a slice after turning the plane over Z axis
     # if native slice are coronal, ZRotated will be axial (sometimes called transverse).
     # width = self._xLength, height = self._zLength
-    def exportZRotatedSlice2(self, sliceIndex, outFilepath):
+    def exportZRotatedSlice(self, sliceIndex, outFilepath):
         try:
             self._saveImage(self._imageDatasetNd[:, sliceIndex, :], outFilepath)
         except IndexError as e:
@@ -119,7 +118,7 @@ class MincData:
 
 
     # return the intensity or the voxel at x, y, z coordinate
-    def getValueNd(self, x, y, z, interpolate=False):
+    def getValue(self, x, y, z, interpolate=False):
         val = 0
 
         if(interpolate):
@@ -133,9 +132,9 @@ class MincData:
         return val
 
 
-    # same as getValueNd but using a tuple (x, y, z)
-    def getValueNdTuple(self, coord, interpolate=False):
-        return self.getValueNd(coord[0], coord[1], coord[2], interpolate)
+    # same as getValue but using a tuple (x, y, z)
+    def getValueTuple(self, coord, interpolate=False):
+        return self.getValue(coord[0], coord[1], coord[2], interpolate)
 
 
     # each edge has a index, TODO: write about it.
@@ -253,14 +252,14 @@ class MincData:
         yNorm = y - yBottom
         zNorm = z - zBottom
 
-        V000 = self.getValueNd(xBottom, yBottom, zBottom)
-        V100 = self.getValueNd(xTop, yBottom, zBottom)
-        V010 = self.getValueNd(xBottom, yTop, zBottom)
-        V001 = self.getValueNd(xBottom, yBottom, zTop)
-        V101 = self.getValueNd(xTop, yBottom, zTop)
-        V011 = self.getValueNd(xBottom, yTop, zTop )
-        V110 = self.getValueNd(xTop, yTop, zBottom)
-        V111 = self.getValueNd(xTop, yTop, zTop)
+        V000 = self.getValue(xBottom, yBottom, zBottom)
+        V100 = self.getValue(xTop, yBottom, zBottom)
+        V010 = self.getValue(xBottom, yTop, zBottom)
+        V001 = self.getValue(xBottom, yBottom, zTop)
+        V101 = self.getValue(xTop, yBottom, zTop)
+        V011 = self.getValue(xBottom, yTop, zTop )
+        V110 = self.getValue(xTop, yTop, zBottom)
+        V111 = self.getValue(xTop, yTop, zTop)
 
         try:
             interpVal = V000 * (1 - xNorm) * (1 - yNorm) * (1 - zNorm) + \

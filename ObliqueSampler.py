@@ -13,13 +13,22 @@ class ObliqueSampler:
     _3Ddata = None  # an instance of MincData
     _plane = None   # an instance of Plane
     _planePolygon = None # the polygon formed by the intersection of the plane and the cube of data (from 3 to 6 vertice)
+    _samplingFactor = None # impact the size of the finale image
 
     _vecTools = None     # some (simple) tool to perform vector calculus
 
     def __init__(self, data3D, plane):
+        self._samplingFactor = 1.
         self._vecTools = VectorTools.VectorTools()
         self._3Ddata = data3D
         self._plane = plane
+
+
+    # important in case the plane changes (rotation or translation).
+    # for now, it's only about the intersection polygon, but other method
+    # may add up later
+    def update(self):
+        self.computeCubePlaneHitPoints()
 
 
     # takes all the edges or the cube (12 in total)
@@ -111,11 +120,12 @@ class ObliqueSampler:
             return (xCenter, yCenter, zCenter)
 
         else:
-            print("ERROR: the polygon is not defined yet")
+            print("ERROR: the polygon is not defined yet, you should call the update() method")
             return None
 
 
-    # return the diagonal (length) of the polygon bounding box
+    # return the diagonal (length) of the polygon bounding box.
+    # affected by the _samplingFactor (ie. doubled if 2)
     def _getLargestSide(self):
 
         if(self._planePolygon):
@@ -140,10 +150,10 @@ class ObliqueSampler:
 
             boxSide = math.sqrt((xMax-xMin)*(xMax-xMin) + (yMax-yMin)*(yMax-yMin) + (zMax-zMin)*(zMax-zMin))
 
-            return boxSide
+            return boxSide * self._samplingFactor
 
         else:
-            print("ERROR: the polygon is not defined yet")
+            print("ERROR: the polygon is not defined yet, you should call the update() method")
             return None
 
 
@@ -155,9 +165,9 @@ class ObliqueSampler:
         u = self._plane.getUvector() # u goes to x direction (arbitrary)
         v = self._plane.getVvector() # v goes to y direction (arbitrary)
 
-        target3Dpoint = (startingSeed[0] + dx * u[0] + dy * v[0], \
-            startingSeed[1]  + dx * u[1] + dy * v[1], \
-            startingSeed[2] + dx * u[2] + dy * v[2])
+        target3Dpoint = (startingSeed[0] + dx * u[0] / self._samplingFactor + dy * v[0] / self._samplingFactor, \
+            startingSeed[1]  + dx * u[1] / self._samplingFactor + dy * v[1] / self._samplingFactor, \
+            startingSeed[2] + dx * u[2] / self._samplingFactor + dy * v[2] / self._samplingFactor)
 
         return target3Dpoint
 
@@ -170,8 +180,16 @@ class ObliqueSampler:
         return self._3Ddata.isWithin(cubeCoord)
 
 
-    # start the sampling/filling process
-    def startSampling(self, filepath):
+
+    def setSamplingFactor(self, f):
+        self._samplingFactor = float(f)
+
+
+    # start the sampling/filling process.
+    # interpolate:
+    #   False (default) = nearest neighbor, crispier
+    #   True = trilinear (3D) interpolation, slower, smoother
+    def startSampling(self, filepath, interpolate=False):
 
         dataType = self._3Ddata.getDataType()
         largestSide = self._getLargestSide()
@@ -208,8 +226,7 @@ class ObliqueSampler:
 
 
                 # get the interpolated color of the currentPixel from 3D cube
-                #color = self._3Ddata.getValueTuple(cubeCoord)
-                color = self._3Ddata.getValueNdTuple(cubeCoord, False)
+                color = self._3Ddata.getValueTuple(cubeCoord, interpolate)
 
 
 
