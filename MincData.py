@@ -37,6 +37,10 @@ class MincData:
 
         self._convertDataToNdArray()
 
+        # since we have a numpy 3D ndarray, we dont need the
+        # mincHdf object anymore
+        self.close()
+
 
     # converting minc data (n 2D images) into a 3D numpy array
     # to speed up the getValue method (~x22 times faster)
@@ -69,147 +73,69 @@ class MincData:
         self._mincHdf.close()
 
 
+    # return the minc dataset size as a tuple (x, y, z)
     def getSize(self):
         return (self._xLength, self._yLength, self._zLength)
 
 
     # export a slice in the the natively encoded datastructure
     def exportNativeSlice(self, sliceIndex, outFilepath):
-        if(sliceIndex >= 0 and sliceIndex < self._xLength):
-            self._saveImage(self._imageDataset[sliceIndex])
-        else:
-            print("ERROR: the slice index must be [0; " + str(self._xLength-1) + "]")
+        try:
+            self._saveImage(self._imageDatasetNd[sliceIndex, :, :], outFilepath)
+        except IndexError as e:
+            print(e)
+
+
 
     # export a slice after turning the plane over Y axis
     # if native slice are coronal, YRotated will be sagital.
     # width = self._xLength, height = self._yLength
-    def exportYRotatedSlice(self, sliceIndex, outFilepath):
-        if(sliceIndex >= 0 and sliceIndex < self._zLength):
-
-            # /!\ x and y are kind of
-            # reverse from natural conventions in np
-            arImg = np.zeros((self._yLength, self._xLength), dtype = self._dataType )
-
-            # rather than filling arImg pixel by pixel,
-            # this rotation allows to take entire columns
-            for natSliceIndx in range(0, self._xLength):
-                arImg[:, natSliceIndx] = self._imageDataset[natSliceIndx][:, sliceIndex]
-
-            self._saveImage(arImg, outFilepath)
-
-        else:
-            print("ERROR: the slice index must be [0; " + str(self._zLength-1) + "]")
+    def exportYRotatedSlice2(self, sliceIndex, outFilepath):
+        try:
+            self._saveImage(self._imageDatasetNd[:, :, sliceIndex], outFilepath)
+        except IndexError as e:
+            print(e)
 
 
     # export a slice after turning the plane over Z axis
     # if native slice are coronal, ZRotated will be axial (sometimes called transverse).
     # width = self._xLength, height = self._zLength
-    def exportZRotatedSlice(self, sliceIndex, outFilepath):
-        if(sliceIndex >= 0 and sliceIndex < self._yLength):
-
-            # /!\ x and y are kind of
-            # reverse from natural conventions in np
-            arImg = np.zeros((self._zLength, self._xLength), dtype = self._dataType )
-
-            # rather than filling arImg pixel by pixel,
-            # this rotation allows to take entire row
-            for natSliceIndx in range(0, self._xLength):
-                arImg[:, natSliceIndx] = self._imageDataset[natSliceIndx][ sliceIndex, :]
-
-            self._saveImage(arImg, outFilepath)
-
-        else:
-            print("ERROR: the slice index must be [0; " + str(self._zLength-1) + "]")
+    def exportZRotatedSlice2(self, sliceIndex, outFilepath):
+        try:
+            self._saveImage(self._imageDatasetNd[:, sliceIndex, :], outFilepath)
+        except IndexError as e:
+            print(e)
 
 
-    # USELESS
-    # export the 3D block as a json file
+    # export the 3D block as a json file.
+    # the data file created is huge, not sure it is easy to handle
     def exportToJson(self, filename):
-        print("Info")
-        print("\tbuilding 3D structure...")
-        arr = self._build3dArrayFromMinc()
-
         print("\tpreparing data structure...")
-        arrList = arr.tolist()
+        arrList = self._imageDatasetNd.tolist()
 
         print("\tconverting to json and write file...")
-        #json.dump(arrList, codecs.open(filename, 'w', encoding='utf-8'), separators=(',', ':'), sort_keys=True, indent=4)
-
         with open(filename, 'w') as outfile:
             json.dump(arrList, outfile)
 
 
-    # PRIVATE: build a 3D numpy array based on the minc data.
-    # TODO: use _imageDatasetNd instead
-    # For export purpose but could be used for something else.
-    def _build3dArrayFromMinc(self):
-        tempArray = np.zeros((self._xLength, self._yLength, self._zLength), dtype=self._dataType)
+    # return the intensity or the voxel at x, y, z coordinate
+    def getValueNd(self, x, y, z, interpolate=False):
+        val = 0
 
-        for xRange in range(0, self._xLength):
-            tempArray[xRange, :, :] = self._imageDataset[xRange]
-
-        return tempArray
-
-
-    # return the intensity value at a given (x, y, z) coordinate.
-    # if x, y or z is not integer, we are performing
-    # a trilinear interpolation
-    def getValue_ORIG(self, x, y, z):
-        # here we are keeping a 1 pixel margin to be sure we can interpolate
-        if( (x >= 0 and x < self._xLength) and
-            (y >= 0 and y < self._yLength) and
-            (z >= 0 and z < self._zLength)):
-
-           if(x.is_integer() and x.is_integer() and z.is_integer()):
-              # print x
-              # print y
-              # print z
-
-               val = self._imageDataset[int(x)][int(y), int(z)]
-              # print val
-              # print "-------------------------"
-               return val
-           else:
-               return self.getValue( math.floor(x), math.floor(y), math.floor(z))
-               #return self._getValueTrilinear(x, y, z)
+        if(interpolate):
+            val = self._getValueTrilinear(x, y, z)
         else:
-            print("ERROR: one of the index is out of range")
-
-
-
-    # COPY of the _ORIG, to be removed when done with it
-    def getValue(self, x, y, z):
-        val = 0
-
-        try:
-            val = self._imageDataset[ x][y, z]
-        except Exception as e:
-            print e
+            try:
+                val = self._imageDatasetNd[x, y, z]
+            except IndexError as e:
+                print e
 
         return val
 
 
-    # same as getValue but from the np.ndarray data structure
-    def getValueNd(self, x, y, z):
-        val = 0
-
-        try:
-            val = self._imageDatasetNd[x, y, z]
-        except IndexError as e:
-            print e
-
-        return val
-
-
-    # same as getValue but from the np.ndarray data structure
-    def getValueNdTuple(self, coord):
-        return self.getValueNd(coord[0], coord[1], coord[2])
-
-
-    # exactelly the same as getValue, except it takes
-    # a tuple (x, y, z) instead of 3 args
-    def getValueTuple(self, coord):
-        return self.getValue(coord[0], coord[1], coord[2])
+    # same as getValueNd but using a tuple (x, y, z)
+    def getValueNdTuple(self, coord, interpolate=False):
+        return self.getValueNd(coord[0], coord[1], coord[2], interpolate)
 
 
     # each edge has a index, TODO: write about it.
@@ -313,18 +239,6 @@ class MincData:
             z < 2 or z > self._zLength-3):
             return 0
 
-        '''
-        Here x, y and z are in a normalized space.
-
-        Vxyz = 	V000 (1 - x) (1 - y) (1 - z) +
-                V100 x (1 - y) (1 - z) +
-                V010 (1 - x) y (1 - z) +
-                V001 (1 - x) (1 - y) z +
-                V101 x (1 - y) z +
-                V011 (1 - x) y z +
-                V110 x y (1 - z) +
-                V111 x y z
-        '''
         # For the sake of readability, let's assume that:
         xTop = math.ceil(x)
         yTop = math.ceil(y)
@@ -349,7 +263,6 @@ class MincData:
         V111 = self.getValueNd(xTop, yTop, zTop)
 
         try:
-
             interpVal = V000 * (1 - xNorm) * (1 - yNorm) * (1 - zNorm) + \
                     V100 * xNorm * (1 - yNorm) * (1 - zNorm) + \
                     V010 * (1 - xNorm) * yNorm * (1 - zNorm) + \
@@ -380,7 +293,7 @@ class MincData:
 
             print "-------------------------------"
 
-            return None
+            return 0
 
 
 

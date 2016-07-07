@@ -64,19 +64,6 @@ class ObliqueSampler:
         # system resolution for t:
         # t = (a*l + b*m + c*n + d) / ( -1 * (a*alpha + b*beta + c*gamma) )
         try:
-            '''
-            t = ( planeEquation[0]* affineSystem[0][0] + \
-                  planeEquation[1]* affineSystem[1][0] + \
-                  planeEquation[2]* affineSystem[2][0] + \
-                  planeEquation[3] ) \
-                / \
-                ( (-1) * \
-                ( planeEquation[0]* affineSystem[0][1] + \
-                  planeEquation[1]* affineSystem[1][1] + \
-                  planeEquation[2]* affineSystem[2][1] ) \
-                )
-            '''
-
             tNumerator = ( planeEquation[0]* affineSystem[0][0] + \
                   planeEquation[1]* affineSystem[1][0] + \
                   planeEquation[2]* affineSystem[2][0] + \
@@ -95,26 +82,9 @@ class ObliqueSampler:
             y =  affineSystem[1][0] + affineSystem[1][1] * t
             z =  affineSystem[2][0] + affineSystem[2][1] * t
 
-            '''
-            print "tNumerator:"
-            print tNumerator
-            print "tDenominator:"
-            print tDenominator
-            print "planeEquation:"
-            print planeEquation
-            print "affineSystem:"
-            print affineSystem
-            print "t:"
-            print t
-            print(str(x) + " " + str(y) + " " +  str(z))
-            print("------------------------------")
-            '''
-
         except ZeroDivisionError as e:
-            #print "inf"
-            #print("------------------------------")
+            # occures when this edge of the cube is defined along this plane
             return float("inf")
-
 
         return (x, y, z)
 
@@ -170,7 +140,6 @@ class ObliqueSampler:
 
             boxSide = math.sqrt((xMax-xMin)*(xMax-xMin) + (yMax-yMin)*(yMax-yMin) + (zMax-zMin)*(zMax-zMin))
 
-
             return boxSide
 
         else:
@@ -182,7 +151,6 @@ class ObliqueSampler:
     # the center of the 2D oblique image matches the 3D starting seed
     # (center of the inner polygon, made by the intersection of the
     # plane with the cube)
-    #
     def obliqueImageCoordToCubeCoord(self, centerImage, startingSeed, dx, dy):
         u = self._plane.getUvector() # u goes to x direction (arbitrary)
         v = self._plane.getVvector() # v goes to y direction (arbitrary)
@@ -200,8 +168,6 @@ class ObliqueSampler:
     def isImageCoordInCube(self, centerImage, startingSeed, dx, dy):
         cubeCoord = self.obliqueImageCoordToCubeCoord(centerImage, startingSeed, dx, dy)
         return self._3Ddata.isWithin(cubeCoord)
-
-
 
 
     # start the sampling/filling process
@@ -243,7 +209,7 @@ class ObliqueSampler:
 
                 # get the interpolated color of the currentPixel from 3D cube
                 #color = self._3Ddata.getValueTuple(cubeCoord)
-                color = self._3Ddata.getValueNdTuple(cubeCoord)
+                color = self._3Ddata.getValueNdTuple(cubeCoord, False)
 
 
 
