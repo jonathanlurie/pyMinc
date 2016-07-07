@@ -206,6 +206,7 @@ class ObliqueSampler:
 
     # start the sampling/filling process
     def startSampling(self, filepath):
+
         dataType = self._3Ddata.getDataType()
         largestSide = self._getLargestSide()
         startingSeed = self._getStartingSeed()
@@ -224,6 +225,8 @@ class ObliqueSampler:
 
         counter = 0
 
+        print("start sampling...")
+
         while(len(pixelStack) > 0):
             currentPixel = pixelStack.pop()
             x = currentPixel[0]
@@ -234,10 +237,15 @@ class ObliqueSampler:
                 # marking the mask (been here!)
                 obliqueImageMask[y, x] = 255
 
+
                 cubeCoord = self.obliqueImageCoordToCubeCoord(obliqueImageCenter, startingSeed, x - obliqueImageCenter[0], y - obliqueImageCenter[1])
 
+
                 # get the interpolated color of the currentPixel from 3D cube
-                color = self._3Ddata.getValueTuple(cubeCoord)
+                #color = self._3Ddata.getValueTuple(cubeCoord)
+                color = self._3Ddata.getValueNdTuple(cubeCoord)
+
+
 
                 # painting the image
                 if(color):
@@ -249,29 +257,33 @@ class ObliqueSampler:
                 # going north
                 yNorth = y + 1
                 xNorth = x
-                if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xNorth - obliqueImageCenter[0], yNorth - obliqueImageCenter[1])):
-                    pixelStack.append((xNorth, yNorth))
+                if(obliqueImageMask[yNorth, xNorth] == 0):
+                    if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xNorth - obliqueImageCenter[0], yNorth - obliqueImageCenter[1]) ):
+                        pixelStack.append((xNorth, yNorth))
 
                 # going south
                 ySouth = y - 1
                 xSouth = x
-                if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xSouth - obliqueImageCenter[0], ySouth - obliqueImageCenter[1])):
-                    pixelStack.append((xSouth, ySouth))
+                if(obliqueImageMask[ySouth, xSouth] == 0):
+                    if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xSouth - obliqueImageCenter[0], ySouth - obliqueImageCenter[1])):
+                        pixelStack.append((xSouth, ySouth))
 
                 # going east
                 yEast = y
                 xEast = x + 1
-                if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xEast - obliqueImageCenter[0], yEast - obliqueImageCenter[1])):
-                    pixelStack.append((xEast, yEast))
+                if(obliqueImageMask[yEast, xEast] == 0):
+                    if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xEast - obliqueImageCenter[0], yEast - obliqueImageCenter[1])):
+                        pixelStack.append((xEast, yEast))
 
                 # going west
                 yWest = y
                 xWest = x - 1
-                if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xWest - obliqueImageCenter[0], yWest - obliqueImageCenter[1])):
-                    pixelStack.append((xWest, yWest))
+                if(obliqueImageMask[yWest, xWest] == 0):
+                    if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xWest - obliqueImageCenter[0], yWest - obliqueImageCenter[1])):
+                        pixelStack.append((xWest, yWest))
 
-            #if(counter%1000 == 0):
-
+            if(counter%100 == 0):
+                None
                 #print counter
                 #im = Image.fromarray(obliqueImageMask)
                 #im.save("mask/mask_" + str(counter) + ".jpg", quality=80)

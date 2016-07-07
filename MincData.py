@@ -7,6 +7,7 @@ import math
 class MincData:
     _mincHdf = None
     _imageDataset = None
+    _imageDatasetNd = None  # same data as _imageDataset but rearanged into a np.ndarray
     _xLength = 0
     _yLength = 0
     _zLength = 0
@@ -34,21 +35,39 @@ class MincData:
         # datatype (ie. uint8), determines the min, max
         self._dataType = np.dtype(self._imageDataset[0][0][0])
 
+        self._convertDataToNdArray()
 
+
+    # converting minc data (n 2D images) into a 3D numpy array
+    # to speed up the getValue method (~x22 times faster)
+    def _convertDataToNdArray(self):
+        self._imageDatasetNd = np.ndarray(shape=(self._xLength, self._yLength, self._zLength ), dtype=self._dataType)
+
+        for natSliceIndx in range(0, self._xLength):
+            self._imageDatasetNd[natSliceIndx, :, :] = self._imageDataset[natSliceIndx][:, :]
+
+
+    # returns the numpy type used for data
     def getDataType(self):
         return self._dataType
 
 
+    # return the minimum value allowed by the datatype (ie. 0 for uint8).
+    # useful when we want to output a uint8 image
     def getDataTypeMin(self):
         return np.iinfo(self._dataType).min
 
 
+    # return the maximum value allowed by the datatype (ie. 255 for uint8)
+    # useful when we want to output a uint8 image
     def getDataTypeMax(self):
         return np.iinfo(self._dataType).max
 
 
+    # should be called at the end of the process, when we are done with hdf5 lib
     def close(self):
         self._mincHdf.close()
+
 
     def getSize(self):
         return (self._xLength, self._yLength, self._zLength)
@@ -103,11 +122,6 @@ class MincData:
             print("ERROR: the slice index must be [0; " + str(self._zLength-1) + "]")
 
 
-    # return the data type used in the minc dataset (numpy compliant)
-    def getDataType(self):
-        return self._dataType
-
-
     # USELESS
     # export the 3D block as a json file
     def exportToJson(self, filename):
@@ -126,6 +140,7 @@ class MincData:
 
 
     # PRIVATE: build a 3D numpy array based on the minc data.
+    # TODO: use _imageDatasetNd instead
     # For export purpose but could be used for something else.
     def _build3dArrayFromMinc(self):
         tempArray = np.zeros((self._xLength, self._yLength, self._zLength), dtype=self._dataType)
@@ -139,7 +154,7 @@ class MincData:
     # return the intensity value at a given (x, y, z) coordinate.
     # if x, y or z is not integer, we are performing
     # a trilinear interpolation
-    def getValue(self, x, y, z):
+    def getValue_ORIG(self, x, y, z):
         # here we are keeping a 1 pixel margin to be sure we can interpolate
         if( (x >= 0 and x < self._xLength) and
             (y >= 0 and y < self._yLength) and
@@ -159,6 +174,36 @@ class MincData:
                #return self._getValueTrilinear(x, y, z)
         else:
             print("ERROR: one of the index is out of range")
+
+
+
+    # COPY of the _ORIG, to be removed when done with it
+    def getValue(self, x, y, z):
+        val = 0
+
+        try:
+            val = self._imageDataset[ x][y, z]
+        except Exception as e:
+            print e
+
+        return val
+
+
+    # same as getValue but from the np.ndarray data structure
+    def getValueNd(self, x, y, z):
+        val = 0
+
+        try:
+            val = self._imageDatasetNd[x, y, z]
+        except IndexError as e:
+            print e
+
+        return val
+
+
+    # same as getValue but from the np.ndarray data structure
+    def getValueNdTuple(self, coord):
+        return self.getValueNd(coord[0], coord[1], coord[2])
 
 
     # exactelly the same as getValue, except it takes
@@ -294,14 +339,14 @@ class MincData:
         yNorm = y - yBottom
         zNorm = z - zBottom
 
-        V000 = self.getValue(xBottom, yBottom, zBottom)
-        V100 = self.getValue(xTop, yBottom, zBottom)
-        V010 = self.getValue(xBottom, yTop, zBottom)
-        V001 = self.getValue(xBottom, yBottom, zTop)
-        V101 = self.getValue(xTop, yBottom, zTop)
-        V011 = self.getValue(xBottom, yTop, zTop )
-        V110 = self.getValue(xTop, yTop, zBottom)
-        V111 = self.getValue(xTop, yTop, zTop)
+        V000 = self.getValueNd(xBottom, yBottom, zBottom)
+        V100 = self.getValueNd(xTop, yBottom, zBottom)
+        V010 = self.getValueNd(xBottom, yTop, zBottom)
+        V001 = self.getValueNd(xBottom, yBottom, zTop)
+        V101 = self.getValueNd(xTop, yBottom, zTop)
+        V011 = self.getValueNd(xBottom, yTop, zTop )
+        V110 = self.getValueNd(xTop, yTop, zBottom)
+        V111 = self.getValueNd(xTop, yTop, zTop)
 
         try:
 

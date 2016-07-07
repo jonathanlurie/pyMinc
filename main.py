@@ -16,14 +16,16 @@ md = MincData.MincData("data/full8_400um_optbal.mnc")
 #print md.getValue(200.5, 150.2, 165.8)
 #print md.getValue(200.99, 150.01, 165.99)
 
+
 p = Plane.Plane()
 #p.makeFromThreePoints( (0, 0, 0), (386, 303, 0), (386, 303, 348)) #OK
-#p.makeFromThreePoints( (0, 0, 0), (386, 0, 0), (0, 303, 348)) #OK
+p.makeFromThreePoints( (0, 0, 0), (386, 0, 0), (0, 303, 348)) #OK
 #p.makeFromThreePoints( (0, 0, 0), (386, 0, 0), (100, 303, 348)) #OK
 #p.makeFromThreePoints( (0, 0, 0), (386, 0, 0), (0, 303, 100)) #OK
 #p.makeFromThreePoints( (3, 280, 5), (9, 295, 52), (32, 295, 2)) #OK
 
-p.makeFromThreePoints( (0, 303, 300), (350, 303, 0), (350, 0, 0)) #OK
+#p.makeFromThreePoints( (0, 303, 300), (350, 303, 0), (350, 0, 0)) #OK
+#p.makeFromThreePoints( (0, 303, 300), (350, 303, 0), (0, 10, 0)) #OK
 
 
 
