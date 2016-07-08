@@ -34,7 +34,12 @@ p = Plane.Plane()
 # setting the plane with 3 points, each is a tuple (x, y, z)
 # Not bounded by the minc cube but should cross it at certain point
 # if you want to get an oblique section... (makes sense, right?)
-p.makeFromThreePoints( (0, 120, 0), (386, 120, 0), (0, 120, 348))
+#p.makeFromThreePoints( (0, 120, 0), (386, 120, 0), (0, 120, 348))
+
+#p.makeFromOnePointAndNormalVector((30, 120, 30), (0, 1, 0)) # 1
+p.makeFromOnePointAndNormalVector((150, 150, 150), (1, 1, 1)) #2
+
+print p.getPlaneEquation()
 
 
 # 3- creating the oblique sampler, that build a bridge between
@@ -51,4 +56,4 @@ os.setSamplingFactor(1)
 
 # Start the interpolation.
 # interpolate=True will use a trilinear interpolation (slower, smoother)
-os.startSampling("out/obliqueFlat120.jpg", interpolate=True)
+os.startSampling("out/oblique.jpg", interpolate=False)
