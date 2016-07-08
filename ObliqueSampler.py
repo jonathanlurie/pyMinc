@@ -221,14 +221,10 @@ class ObliqueSampler:
                 # marking the mask (been here!)
                 obliqueImageMask[y, x] = 255
 
-
                 cubeCoord = self.obliqueImageCoordToCubeCoord(obliqueImageCenter, startingSeed, x - obliqueImageCenter[0], y - obliqueImageCenter[1])
-
 
                 # get the interpolated color of the currentPixel from 3D cube
                 color = self._3Ddata.getValueTuple(cubeCoord, interpolate)
-
-
 
                 # painting the image
                 if(color):
@@ -236,34 +232,45 @@ class ObliqueSampler:
                 else:
                     obliqueImage[y, x] = 0
 
-
                 # going north
-                yNorth = y + 1
-                xNorth = x
-                if(obliqueImageMask[yNorth, xNorth] == 0):
-                    if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xNorth - obliqueImageCenter[0], yNorth - obliqueImageCenter[1]) ):
-                        pixelStack.append((xNorth, yNorth))
+                try:
+                    yNorth = y + 1
+                    xNorth = x
+                    if(obliqueImageMask[yNorth, xNorth] == 0):
+                        if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xNorth - obliqueImageCenter[0], yNorth - obliqueImageCenter[1]) ):
+                            pixelStack.append((xNorth, yNorth))
+                except IndexError as e:
+                    print e
 
                 # going south
-                ySouth = y - 1
-                xSouth = x
-                if(obliqueImageMask[ySouth, xSouth] == 0):
-                    if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xSouth - obliqueImageCenter[0], ySouth - obliqueImageCenter[1])):
-                        pixelStack.append((xSouth, ySouth))
+                try:
+                    ySouth = y - 1
+                    xSouth = x
+                    if(obliqueImageMask[ySouth, xSouth] == 0):
+                        if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xSouth - obliqueImageCenter[0], ySouth - obliqueImageCenter[1])):
+                            pixelStack.append((xSouth, ySouth))
+                except IndexError as e:
+                    print e
 
                 # going east
-                yEast = y
-                xEast = x + 1
-                if(obliqueImageMask[yEast, xEast] == 0):
-                    if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xEast - obliqueImageCenter[0], yEast - obliqueImageCenter[1])):
-                        pixelStack.append((xEast, yEast))
+                try:
+                    yEast = y
+                    xEast = x + 1
+                    if(obliqueImageMask[yEast, xEast] == 0):
+                        if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xEast - obliqueImageCenter[0], yEast - obliqueImageCenter[1])):
+                            pixelStack.append((xEast, yEast))
+                except IndexError as e:
+                    print e
 
                 # going west
-                yWest = y
-                xWest = x - 1
-                if(obliqueImageMask[yWest, xWest] == 0):
-                    if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xWest - obliqueImageCenter[0], yWest - obliqueImageCenter[1])):
-                        pixelStack.append((xWest, yWest))
+                try:
+                    yWest = y
+                    xWest = x - 1
+                    if(obliqueImageMask[yWest, xWest] == 0):
+                        if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xWest - obliqueImageCenter[0], yWest - obliqueImageCenter[1])):
+                            pixelStack.append((xWest, yWest))
+                except IndexError as e:
+                    print e
 
             if(counter%100 == 0):
                 None
