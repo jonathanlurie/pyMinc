@@ -137,4 +137,4 @@ if __name__ == "__main__":
     #p.makeFromThreePoints( (1, -2, 0), (3, 1, 4), (0, -1, 2))
     #p.makeFromThreePoints( (1, -2, 0), (3, 10, 4), (0, -1, 2))
     p.makeFromThreePoints( (0, 0, 0), (1, 0, 0), (0, 1, 1))
-    print p.getPlaneEquation()
+    print(p.getPlaneEquation() )

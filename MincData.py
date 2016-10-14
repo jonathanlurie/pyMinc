@@ -127,7 +127,7 @@ class MincData:
             try:
                 val = self._imageDatasetNd[x, y, z]
             except IndexError as e:
-                print e
+                print(e)
 
         return val
 
@@ -274,27 +274,22 @@ class MincData:
             return interpVal
 
         except TypeError as e:
-            print e
+            print(e)
 
-            print "V110"
-            print V110
+            print("xNorm")
+            print(xNorm)
 
-            print "xNorm"
-            print xNorm
+            print("yNorm")
+            print(yNorm)
 
-            print "yNorm"
-            print yNorm
+            print("zNorm")
+            print(zNorm)
 
-            print "zNorm"
-            print zNorm
+            print(str(x) + " " + str(y) + " " + str(z) )
 
-            print str(x) + " " + str(y) + " " + str(z)
-
-            print "-------------------------------"
+            print("-------------------------------")
 
             return 0
-
-
 
 
 

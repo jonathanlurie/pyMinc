@@ -61,7 +61,7 @@ if __name__ == "__main__":
     vt = VectorTools()
 
     cross = vt.crossProduct(v1, v2)
-    print cross
+    print(cross)
 
     v3Normalized = vt.normalize(v3)
-    print v3Normalized
+    print(v3Normalized)

@@ -11,15 +11,15 @@ import h5py
 
 def printGroupName(name):
     """ For being used recursively with visit() """
-    print name
+    print(name)
 
 
 def printGroupAttributes(name, object):
     """ For being used recursively with visititems() """
     print("------------------------------------------------")
-    print name
-    print object.attrs.keys()
-    print object.attrs.values()
+    print(name)
+    print(object.attrs.keys())
+    print(object.attrs.values())
     #object.attrs.items()
 
 
@@ -33,7 +33,7 @@ mincHdf = h5py.File(mincFile, 'r')
 #print("values:")
 #print(mincHdf.values())
 
-# print names of group and subgroup recursively
+# print(names of group and subgroup recursively)
 #mincHdf.values()[0].visit(printGroupName)
 
 #mincHdf.visititems(printGroupAttributes)
@@ -53,8 +53,8 @@ print(imgDataset[0].shape[0])
 
 print(np.dtype(imgDataset[11][165][136]))
 
-print np.iinfo(np.dtype(imgDataset[11][165][136])).min
-print np.iinfo(np.dtype(imgDataset[11][165][136])).max
+print(np.iinfo(np.dtype(imgDataset[11][165][136])).min )
+print(np.iinfo(np.dtype(imgDataset[11][165][136])).max )
 
 
 

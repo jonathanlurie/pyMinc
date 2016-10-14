@@ -192,10 +192,12 @@ class ObliqueSampler:
     def startSampling(self, filepath, interpolate=False):
 
         dataType = self._3Ddata.getDataType()
-        largestSide = self._getLargestSide()
+        largestSide = round(self._getLargestSide())
         startingSeed = self._getStartingSeed()
 
-        obliqueImageCenter = ( int(largestSide / 2), int(largestSide / 2))
+        obliqueImageCenter = ( int(largestSide) / 2, int(largestSide) / 2)
+
+        print(largestSide)
 
         # will contain the (interpolated) data from the cube
         obliqueImage = np.zeros((int(largestSide), int(largestSide)), dtype=dataType )
@@ -223,6 +225,14 @@ class ObliqueSampler:
 
                 cubeCoord = self.obliqueImageCoordToCubeCoord(obliqueImageCenter, startingSeed, x - obliqueImageCenter[0], y - obliqueImageCenter[1])
 
+                if(counter == 1500):
+                    print(self._plane.getUvector() ) # u goes to x direction (arbitrary)
+                    print(self._plane.getVvector() )
+                    print("currentPixel:")
+                    print(currentPixel)
+                    print("cubeCoord:")
+                    print(cubeCoord)
+
                 # get the interpolated color of the currentPixel from 3D cube
                 color = self._3Ddata.getValueTuple(cubeCoord, interpolate)
 
@@ -240,7 +250,7 @@ class ObliqueSampler:
                         if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xNorth - obliqueImageCenter[0], yNorth - obliqueImageCenter[1]) ):
                             pixelStack.append((xNorth, yNorth))
                 except IndexError as e:
-                    print e
+                    print(e)
 
                 # going south
                 try:
@@ -250,7 +260,7 @@ class ObliqueSampler:
                         if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xSouth - obliqueImageCenter[0], ySouth - obliqueImageCenter[1])):
                             pixelStack.append((xSouth, ySouth))
                 except IndexError as e:
-                    print e
+                    print(e)
 
                 # going east
                 try:
@@ -260,7 +270,7 @@ class ObliqueSampler:
                         if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xEast - obliqueImageCenter[0], yEast - obliqueImageCenter[1])):
                             pixelStack.append((xEast, yEast))
                 except IndexError as e:
-                    print e
+                    print(e)
 
                 # going west
                 try:
@@ -270,11 +280,11 @@ class ObliqueSampler:
                         if(self.isImageCoordInCube(obliqueImageCenter, startingSeed, xWest - obliqueImageCenter[0], yWest - obliqueImageCenter[1])):
                             pixelStack.append((xWest, yWest))
                 except IndexError as e:
-                    print e
+                    print(e)
 
             if(counter%100 == 0):
                 None
-                #print counter
+                #print(counter)
                 #im = Image.fromarray(obliqueImageMask)
                 #im.save("mask/mask_" + str(counter) + ".jpg", quality=80)
 
